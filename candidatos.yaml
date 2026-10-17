@@ -1,0 +1,18 @@
+# Candidatos de la elección. Sirve para tres cosas:
+#   - que las piezas queden a nombre del candidato con un mismo nombre, aunque se escriba
+#     distinto ("Pérez", "Juan Pérez", "JP Alcalde"): para eso están los alias;
+#   - que el buzón muestre la lista para elegir a quién favorece o ataca una pieza;
+#   - que las cuentas de cuentas.yaml digan de qué candidato son.
+#
+# Antes de la inscripción oficial (julio de 2027) se ponen como "aspirante" quienes hayan
+# anunciado en público que quieren ser candidatos. Cuando la Registraduría publique la lista,
+# se cambian a "inscrito" (o "no inscrito"). Cada cambio queda en el historial.
+#
+# La forma fácil de agregar o actualizar un candidato es el formulario "Agregar o actualizar
+# un candidato". Desde la línea de comandos:
+#   python herramientas/archivar.py candidato --nombre "..." --cargo Alcaldía --estado aspirante
+#
+# cargo:   Alcaldía | Concejo | Gobernación | Asamblea departamental |
+#          Junta administradora local | Presidencia | Senado | Cámara de Representantes | Otro
+# estado:  aspirante | inscrito | retirado | no inscrito
+candidatos: []

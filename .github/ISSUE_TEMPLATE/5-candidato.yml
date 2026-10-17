@@ -1,0 +1,54 @@
+name: Agregar o actualizar un candidato (equipo)
+description: Para que las piezas queden a nombre del candidato y el buzón lo muestre en la lista.
+title: "Candidato"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Solo el equipo puede usar este formulario. Si el candidato ya está en la lista (por nombre o por alguno de sus otros nombres), se actualiza; si no, se agrega. Cada cambio queda en su historial.
+
+        Antes de la inscripción oficial, agregue como **aspirante** solo a quien haya anunciado en público que quiere ser candidato. Cuando la Registraduría publique la lista, cámbielo a **inscrito** o **no inscrito**.
+  - type: input
+    id: nombre
+    attributes:
+      label: Nombre del candidato
+      description: El nombre completo, como aparecerá en el tarjetón.
+    validations:
+      required: true
+  - type: dropdown
+    id: cargo
+    attributes:
+      label: Cargo
+      options:
+        - Alcaldía
+        - Concejo
+        - Gobernación
+        - Asamblea departamental
+        - Junta administradora local
+        - Presidencia
+        - Senado
+        - Cámara de Representantes
+        - Otro
+    validations:
+      required: true
+  - type: dropdown
+    id: estado
+    attributes:
+      label: Estado
+      options:
+        - aspirante
+        - inscrito
+        - retirado
+        - no inscrito
+    validations:
+      required: true
+  - type: input
+    id: partido
+    attributes:
+      label: Partido o movimiento
+      description: "Partido, coalición o grupo significativo de ciudadanos (firmas). Opcional."
+  - type: textarea
+    id: alias
+    attributes:
+      label: Otros nombres
+      description: "Cómo lo llaman en redes y en la propaganda, uno por línea (por ejemplo, su apellido o su apodo). Opcional."

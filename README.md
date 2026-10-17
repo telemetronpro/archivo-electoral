@@ -43,6 +43,7 @@ Con el script: `python herramientas/archivar.py verificar cali-2027-000143` desc
 
 - [Cómo se decide quién está detrás de una pieza, y por qué se puede confiar](docs/metodo.md)
 - [Cómo montar el archivo en otro municipio](docs/nuevo-municipio.md)
+- Mantener al día [`candidatos.yaml`](candidatos.yaml) con el formulario [Agregar o actualizar un candidato](../../issues/new?template=5-candidato.yml): mientras no haya candidatos oficiales, los aspirantes que lo hayan anunciado en público; al cierre de inscripciones, cambiarlos a inscritos. Así las piezas quedan a nombre de cada candidato aunque se escriba distinto, y el buzón los muestra en una lista.
 - Mantener al día [`cuentas.yaml`](cuentas.yaml) con el formulario [Agregar una cuenta pública](../../issues/new?template=4-agregar-cuenta.yml): cuando se inscriba cada candidato, sus cuentas y las de su campaña; las personalidades públicas e influenciadores que lo apoyen, y las instituciones (Presidencia, Gobernación, Alcaldía o cualquier otro órgano) y sus funcionarios.
 - [Montar el buzón y revisar lo que llega](docs/buzon.md)
 - El script también funciona desde la línea de comandos: `python herramientas/archivar.py -h`.

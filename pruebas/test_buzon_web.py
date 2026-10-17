@@ -29,6 +29,10 @@ class BuzonWeb(RepositorioTemporal):
         self.addCleanup(entorno.stop)
         import web
         self.web = importlib.reload(web)
+        self.web.CANDIDATOS = archivar.RAIZ / "candidatos.yaml"
+        archivar.agregar_candidato("Ana María Gómez", "Alcaldía", "aspirante")
+        archivar.agregar_candidato("Pedro Ruiz", "Concejo", "inscrito")
+        archivar.agregar_candidato("Luis Retirado", "Alcaldía", "retirado")
         self.web.PENDIENTE.mkdir(parents=True)
         self.cliente = self.web.app.test_client()
         self.equipo = {"Authorization": "Basic " + base64.b64encode(f"equipo:{CLAVE}".encode()).decode()}
@@ -50,6 +54,17 @@ class BuzonWeb(RepositorioTemporal):
         self.assertEqual(r.headers["Onion-Location"], "http://abc.onion/")
         self.assertNotIn("Set-Cookie", r.headers)
 
+    def test_lista_de_candidatos_en_carrera(self):
+        texto = self.cliente.get("/").get_data(as_text=True)
+        self.assertIn('<optgroup label="Alcaldía"><option value="Ana María Gómez">', texto)
+        self.assertIn("Pedro Ruiz", texto)
+        self.assertNotIn("Luis Retirado", texto)
+
+    def test_candidato_inventado_no_se_guarda(self):
+        self.enviar(archivos=self.foto(), tipo="valla", candidato="Mi vecino Juan")
+        mensaje = next(self.web.PENDIENTE.glob("*/*-message.txt")).read_text(encoding="utf-8")
+        self.assertIn("candidato: \n", mensaje)
+
     def test_envio_guarda_sin_nombre_de_archivo(self):
         r = self.enviar(archivos=self.foto(), tipo="valla", lugar="Comuna 19",
                         texto="Soy Juan https://www.tiktok.com/@a/video/1")
@@ -58,7 +73,7 @@ class BuzonWeb(RepositorioTemporal):
         self.assertIn("archivo-1.jpg", guardados)
         self.assertFalse(any("Juan" in n for n in guardados))
         mensaje = next(self.web.PENDIENTE.glob("*/*-message.txt")).read_text(encoding="utf-8")
-        self.assertTrue(mensaje.startswith("tipo: valla\nlugar: Comuna 19\n"))
+        self.assertTrue(mensaje.startswith("tipo: valla\nlugar: Comuna 19\ncandidato: \n"))
 
     def test_rechaza_vacio_y_archivos_raros(self):
         self.assertEqual(self.enviar(texto="hola").status_code, 400)
@@ -76,7 +91,8 @@ class BuzonWeb(RepositorioTemporal):
         self.assertEqual(self.cliente.get("/revisar", headers=malo).status_code, 401)
 
     def test_aprobar_y_archivar(self):
-        self.enviar(archivos=self.foto(), tipo="volante", lugar="San Fernando", texto="Soy Juan, 300 123 4567")
+        self.enviar(archivos=self.foto(), tipo="volante", lugar="San Fernando", candidato="Pedro Ruiz",
+                    texto="Soy Juan, 300 123 4567")
         pagina = self.cliente.get("/revisar", headers=self.equipo).get_data(as_text=True)
         self.assertIn("archivo-1.jpg", pagina)
         mensaje = next(self.web.PENDIENTE.glob("*/*-message.txt"))
@@ -98,6 +114,7 @@ class BuzonWeb(RepositorioTemporal):
         ficha = next(archivar.PIEZAS.glob("*/*/*/ficha.yaml")).read_text(encoding="utf-8")
         self.assertIn("tipo: volante", ficha)
         self.assertIn("lugar: San Fernando", ficha)
+        self.assertIn("- Pedro Ruiz", ficha)
         self.assertNotIn("Juan", ficha)
         self.assertNotIn("4567", ficha)
 

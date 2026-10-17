@@ -19,7 +19,7 @@ body:
     id: candidato
     attributes:
       label: Candidato, partido o campaña
-      description: A quién favorece o ataca, si lo sabe.
+      description: A quién favorece o ataca, si lo sabe. Basta con el apellido o el apodo si está en la lista de candidatos.
   - type: textarea
     id: nota
     attributes:

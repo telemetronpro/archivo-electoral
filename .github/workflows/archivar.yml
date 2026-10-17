@@ -28,7 +28,7 @@ jobs:
     # alguien del equipo le pone la etiqueta "archivar".
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      ((contains(github.event.issue.body, '### Enlace') || contains(github.event.issue.body, '### Tipo de pieza') || contains(github.event.issue.body, '### Código de la pieza') || contains(github.event.issue.body, '### Cuenta o usuario')) &&
+      ((contains(github.event.issue.body, '### Enlace') || contains(github.event.issue.body, '### Tipo de pieza') || contains(github.event.issue.body, '### Código de la pieza') || contains(github.event.issue.body, '### Cuenta o usuario') || contains(github.event.issue.body, '### Nombre del candidato')) &&
       ((github.event.action == 'opened' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
       (github.event.action == 'labeled' && github.event.label.name == 'archivar')))
     runs-on: ubuntu-latest
@@ -63,10 +63,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add piezas cuentas.yaml
+          git add piezas cuentas.yaml candidatos.yaml
           git diff --cached --quiet && exit 0
           ids=$(git diff --cached --name-only | grep 'ficha.yaml$' | xargs -r -n1 dirname | xargs -r -n1 basename | tr '\n' ' ')
-          git commit -q -m "${ids:+Pieza $ids}${ids:-Agregar una cuenta pública}"
+          git commit -q -m "${ids:+Pieza $ids}${ids:-Actualizar cuentas o candidatos}"
           git pull -q --rebase origin "${GITHUB_REF_NAME}"
           git push -q origin "HEAD:${GITHUB_REF_NAME}"
 

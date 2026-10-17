@@ -23,9 +23,11 @@ import secrets
 import shutil
 from pathlib import Path
 
+import yaml
 from flask import Flask, Response, abort, redirect, request, send_file
 
 DATOS = Path(os.environ.get("BUZON_DATOS", "/var/lib/buzon/recibido"))
+CANDIDATOS = Path(__file__).resolve().parent.parent / "candidatos.yaml"
 PENDIENTE, APROBADO = DATOS / "pendiente", DATOS / "aprobado"
 CLAVE = os.environ.get("BUZON_CLAVE", "")
 ONION = os.environ.get("BUZON_ONION", "")  # dirección .onion, para mostrarla y avisar a Tor Browser
@@ -94,9 +96,32 @@ def cabeceras(respuesta):
 
 # ---------------------------------------------------------------- para quien envía
 
+def candidatos_en_carrera():
+    """Los candidatos de candidatos.yaml que siguen en carrera, por cargo. Se lee en cada visita,
+    así que basta con actualizar el repositorio para que la lista cambie."""
+    try:
+        lista = yaml.safe_load(CANDIDATOS.read_text(encoding="utf-8")).get("candidatos") or []
+    except (OSError, AttributeError, yaml.YAMLError):
+        return {}
+    por_cargo = {}
+    for c in lista:
+        if c.get("nombre") and c.get("estado") not in ("retirado", "no inscrito"):
+            por_cargo.setdefault(c.get("cargo") or "Otro", []).append(c["nombre"])
+    return {cargo: sorted(nombres) for cargo, nombres in por_cargo.items()}
+
+
 @app.get("/")
 def inicio():
     opciones = "".join(f'<option value="{k}">{html.escape(v)}</option>' for k, v in TIPOS.items())
+    por_cargo = candidatos_en_carrera()
+    grupos = "".join(
+        f'<optgroup label="{html.escape(cargo)}">'
+        + "".join(f'<option value="{html.escape(n)}">{html.escape(n)}</option>' for n in nombres)
+        + "</optgroup>" for cargo, nombres in por_cargo.items())
+    eleccion_candidato = (f"""<label for="candidato">¿A favor (o en contra) de quién?
+    <span class="suave">(opcional)</span></label>
+  <select id="candidato" name="candidato"><option value="">No sé / no aplica</option>{grupos}</select>"""
+                          if por_cargo else "")
     tor = (f"""<div class="aviso"><strong>¿Necesita el máximo anonimato?</strong> Por ejemplo, si trabaja
 en una campaña o en una entidad pública. Abra esta misma página en el
 <a href="https://www.torproject.org/es/download/">navegador Tor</a> con esta dirección:<br>
@@ -112,6 +137,7 @@ videos les quitamos la ubicación y los datos del teléfono antes de guardarlos.
     <input type="file" name="archivos" multiple accept="image/*,video/*,audio/*"></label>
   <label for="tipo">¿Qué es?</label>
   <select id="tipo" name="tipo">{opciones}</select>
+  {eleccion_candidato}
   <label for="lugar">Comuna o barrio <span class="suave">(opcional, no ponga direcciones)</span></label>
   <input type="text" id="lugar" name="lugar" maxlength="60" placeholder="Comuna 19">
   <label for="texto">Enlaces o comentarios <span class="suave">(opcional)</span></label>
@@ -138,6 +164,9 @@ videos y audios. Si es un PDF, tómele una foto o una captura.</p><p><a href="/"
 
     tipo = request.form.get("tipo") if request.form.get("tipo") in TIPOS else "otro"
     lugar = re.sub(r"\s+", " ", request.form.get("lugar") or "").strip()[:60]
+    candidato = request.form.get("candidato") or ""
+    if candidato not in {n for nombres in candidatos_en_carrera().values() for n in nombres}:
+        candidato = ""
     fecha = dt.date.today().isoformat()
     id_envio = secrets.token_hex(8)
     carpeta = PENDIENTE / fecha / id_envio
@@ -146,7 +175,7 @@ videos y audios. Si es un PDF, tómele una foto o una captura.</p><p><a href="/"
     for i, a in enumerate(archivos, 1):
         a.save(carpeta / f"archivo-{i}{Path(a.filename).suffix.lower()}")
     (PENDIENTE / fecha / f"{id_envio}-message.txt").write_text(
-        f"tipo: {tipo}\nlugar: {lugar}\n---\n{texto}\n", encoding="utf-8")
+        f"tipo: {tipo}\nlugar: {lugar}\ncandidato: {candidato}\n---\n{texto}\n", encoding="utf-8")
     if not archivos:
         carpeta.rmdir()
     return pagina("¡Gracias!", """<h1>¡Gracias!</h1><p>Lo recibimos. Una persona del equipo lo revisa y

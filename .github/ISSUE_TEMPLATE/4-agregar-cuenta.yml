@@ -69,6 +69,11 @@ body:
       label: Otra institución u órgano
       description: Si no está en la lista, escriba aquí cuál es (por ejemplo, "Personería de Cali" o "Batallón Pichincha").
   - type: input
+    id: candidato
+    attributes:
+      label: Candidato relacionado
+      description: "Si la cuenta es de un candidato, de su campaña o lo apoya, su nombre (como está en candidatos.yaml). Opcional."
+  - type: input
     id: respaldo
     attributes:
       label: Respaldo

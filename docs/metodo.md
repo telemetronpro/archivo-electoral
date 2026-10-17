@@ -61,7 +61,7 @@ Una pieza no atribuida también puede ganar fuente: si la misma imagen aparece d
 
 ## Calendario para 2027
 
-1. **Primer semestre:** probar con las cuentas de los precandidatos a la Alcaldía de Cali; buscar un aliado en otro municipio.
-2. **Julio, cierre de inscripciones:** completar `cuentas.yaml` con todos los candidatos y sus campañas.
+1. **Primer semestre:** agregar a `candidatos.yaml` como aspirantes a quienes anuncien que quieren ser candidatos a la Alcaldía de Cali, y sus cuentas a `cuentas.yaml`; probar el sistema con ellas; buscar un aliado en otro municipio.
+2. **Julio, cierre de inscripciones:** con la lista de la Registraduría, pasar a cada aspirante a inscrito o no inscrito, agregar a los que falten, y completar `cuentas.yaml` con todos los candidatos y sus campañas.
 3. **Agosto a octubre:** captura diaria de esas cuentas y de la Biblioteca de Anuncios, más los aportes del público.
 4. **Después del 31 de octubre:** depósito en Zenodo (da un DOI citable) y cruce con Cuentas Claras cuando salgan los informes de gastos.

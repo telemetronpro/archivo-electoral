@@ -266,6 +266,45 @@ class Registro(RepositorioTemporal):
         self.assertEqual(ficha["fuente"]["categoria"], "institucion")
         self.assertEqual(ficha["fuente"]["institucion"], "Gobernación")
 
+    def test_candidatos_agregar_actualizar_y_alias(self):
+        ruta = archivar.RAIZ / "candidatos.yaml"
+        ruta.write_text("# comentario de arriba\ncandidatos: []\n", encoding="utf-8")
+        archivar.agregar_candidato("Ana María Gómez", "Alcaldía", "aspirante", None, "Anita, La Gómez")
+        mensaje = archivar.agregar_candidato("ana maria gomez", "Alcaldía", "inscrito", "Partido X", "AMG")
+        self.assertIn("aspirante → inscrito", mensaje)
+        lista = archivar.candidatos()
+        self.assertEqual(len(lista), 1)
+        self.assertEqual(lista[0]["nombre"], "Ana María Gómez")
+        self.assertEqual(lista[0]["partido"], "Partido X")
+        self.assertEqual(lista[0]["alias"], ["Anita", "La Gómez", "AMG"])
+        self.assertEqual(len(lista[0]["historial"]), 2)
+        self.assertTrue(ruta.read_text(encoding="utf-8").startswith("# comentario de arriba\n"))
+        self.assertIn("ya estaba", archivar.agregar_candidato("Anita", "Alcaldía", "inscrito"))
+        with self.assertRaises(archivar.ErrorArchivo):
+            archivar.agregar_candidato("X", "Rey", "aspirante")
+        with self.assertRaises(archivar.ErrorArchivo):
+            archivar.agregar_candidato("X", "Concejo", "ganador")
+
+        # Las piezas quedan a nombre del candidato aunque se escriba distinto.
+        self.assertEqual(archivar.nombre_candidato("LA GOMEZ"), "Ana María Gómez")
+        self.assertEqual(archivar.nombre_candidato("Partido Y"), "Partido Y")
+        carpeta, _ = archivar.archivar_archivos([self.foto_con_gps()], "valla", candidato="anita")
+        ficha = yaml.safe_load((carpeta / "ficha.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(ficha["candidatos"], ["Ana María Gómez"])
+
+    def test_cuenta_de_campaña_lleva_al_candidato(self):
+        archivar.agregar_candidato("Ana María Gómez", "Alcaldía", "aspirante")
+        archivar.agregar_cuenta("tiktok", "@anitaalcaldesa", "Campaña Ana María", "campaña-oficial",
+                                "https://a.co", candidato="ana maría gómez")
+
+        def falsa_descarga(url, carpeta):
+            (carpeta / "pieza.mp4").write_bytes(b"video")
+            return {"uploader_id": "anitaalcaldesa"}
+        with mock.patch.object(archivar, "descargar_con_yt_dlp", falsa_descarga):
+            carpeta, _ = archivar.archivar_enlace("https://www.tiktok.com/@anitaalcaldesa/video/1")
+        ficha = yaml.safe_load((carpeta / "ficha.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(ficha["candidatos"], ["Ana María Gómez"])
+
     def test_buzon_archiva_y_borra_todo(self):
         buzon = self.raiz / "recibido" / "2027-08-12"
         (buzon / "154827441370").mkdir(parents=True)

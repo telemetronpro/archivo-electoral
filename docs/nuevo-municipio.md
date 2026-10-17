@@ -4,7 +4,7 @@ Toma unos 15 minutos y no hay que programar nada.
 
 1. En la página de este repositorio, pulse **Use this template → Create a new repository**. Póngale un nombre como `archivo-electoral-pasto` y déjelo **público**: un archivo que nadie puede revisar no sirve como prueba.
 2. En el repositorio nuevo, edite [`config.yaml`](../config.yaml): el municipio, el prefijo de los códigos (por ejemplo `pasto`) y la elección.
-3. Vacíe [`cuentas.yaml`](../cuentas.yaml) y agregue las cuentas de los candidatos y campañas de su municipio.
+3. Vacíe [`candidatos.yaml`](../candidatos.yaml) y [`cuentas.yaml`](../cuentas.yaml), y agregue los candidatos (o aspirantes) de su municipio y sus cuentas, con los formularios del equipo.
 4. En **Settings → Actions → General → Workflow permissions**, elija **Read and write permissions**. Así el sistema puede guardar las piezas.
 5. En **Issues → Labels**, cree la etiqueta `archivar`. Con ella el equipo aprueba lo que envían personas de fuera.
 6. En **Settings → Collaborators**, agregue a las personas del equipo. Lo que ellas envían se archiva sin esperar aprobación.

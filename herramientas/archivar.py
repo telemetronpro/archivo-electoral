@@ -8,6 +8,7 @@ Uso:
   archivar.py reclasificar ID --categoria C --confianza alta|media|baja --evidencia T
   archivar.py seguir [--maximo N]   guarda las publicaciones nuevas de las cuentas de cuentas.yaml
   archivar.py agregar-cuenta --plataforma P --cuenta C --nombre N --categoria K --respaldo URL
+  archivar.py candidato --nombre N --cargo C --estado E [--partido P] [--alias A]
   archivar.py buzon CARPETA        archiva lo que llegó al buzón de OnionShare y lo borra
   archivar.py sellos               completa los sellos de tiempo pendientes
   archivar.py verificar ID [--carpeta DIR]
@@ -31,6 +32,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -66,6 +68,12 @@ INSTITUCIONES = (
     "Organización electoral (Registraduría, CNE)", "Rama judicial o Fiscalía",
     "Entidad descentralizada o empresa pública", "Otra",
 )
+CARGOS = (
+    "Alcaldía", "Concejo", "Gobernación", "Asamblea departamental", "Junta administradora local",
+    "Presidencia", "Senado", "Cámara de Representantes", "Otro",
+)
+# aspirante: anunció que quiere ser candidato; inscrito: la Registraduría aceptó su inscripción.
+ESTADOS_CANDIDATO = ("aspirante", "inscrito", "retirado", "no inscrito")
 PLATAFORMAS = ("tiktok", "instagram", "facebook", "youtube", "x", "threads", "telegram", "web")
 TIPOS_ARCHIVO = {
     "valla": "Valla o pasacalle",
@@ -108,6 +116,28 @@ def config():
 
 def cuentas():
     return leer_yaml(RAIZ / "cuentas.yaml").get("cuentas") or []
+
+
+def candidatos():
+    ruta = RAIZ / "candidatos.yaml"
+    return (leer_yaml(ruta).get("candidatos") or []) if ruta.exists() else []
+
+
+def sin_tildes(texto):
+    texto = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"\s+", " ", texto).strip().lower()
+
+
+def nombre_candidato(texto, lista=None):
+    """El nombre oficial de candidatos.yaml si el texto coincide con un nombre o un alias;
+    si no, el texto tal cual (puede ser un partido o alguien que aún no está en la lista)."""
+    if not (texto or "").strip():
+        return None
+    buscado = sin_tildes(texto)
+    for c in candidatos() if lista is None else lista:
+        if buscado in {sin_tildes(n) for n in [c.get("nombre"), *(c.get("alias") or [])]}:
+            return c["nombre"]
+    return texto.strip()
 
 
 def ahora():
@@ -509,7 +539,7 @@ def archivar_enlace(url, candidato=None, nota=None, prueba=False, cuenta=None):
             "tipo": "enlace",
             "plataforma": plataforma,
             "fuente_registrada": False,
-            "candidatos": [candidato] if candidato else [],
+            "candidatos": [nombre_candidato(candidato)] if candidato else [],
             "nota": nota or None,
             "testigos": [],
             "fuente": {"categoria": "no-atribuida", "confianza": None, "evidencia": [
@@ -552,7 +582,8 @@ def archivar_enlace(url, candidato=None, nota=None, prueba=False, cuenta=None):
             "url": url,
             "cuenta": cuenta["cuenta"] if cuenta else None,
             "publicado": publicado_de(metadatos),
-            "candidatos": [candidato] if candidato else ([cuenta["nombre"]] if cuenta else []),
+            "candidatos": ([nombre_candidato(candidato)] if candidato else
+                           [cuenta.get("candidato") or cuenta["nombre"]] if cuenta else []),
             "nota": nota or None,
             "testigos": [testigo] if testigo else [],
             "fuente": fuente,
@@ -575,7 +606,7 @@ def archivar_archivos(rutas, tipo, lugar=None, candidato=None, nota=None, prueba
         "tipo": tipo,
         "fuente_registrada": False,
         "lugar": lugar or None,
-        "candidatos": [candidato] if candidato else [],
+        "candidatos": [nombre_candidato(candidato)] if candidato else [],
         "nota": nota or None,
         "testigos": [],
         "fuente": {"categoria": "desconocida" if tipo != "mensajeria" else "no-atribuida",
@@ -643,11 +674,13 @@ def seguir(maximo=10):
     return informe
 
 
-def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo, institucion=None, otra=None):
+def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo, institucion=None, otra=None,
+                   candidato=None):
     """Agrega una cuenta pública al final de cuentas.yaml, sin tocar los comentarios.
 
     Si la categoría es "institucion", hay que decir cuál: un tipo de INSTITUCIONES o, con
-    "Otra" (o sin tipo), el nombre del órgano escrito a mano en `otra`.
+    "Otra" (o sin tipo), el nombre del órgano escrito a mano en `otra`. `candidato` es el
+    candidato al que pertenece o apoya la cuenta; sus piezas quedan a nombre de él.
     """
     if plataforma not in PLATAFORMAS:
         raise ErrorArchivo(f"Plataforma no válida: {plataforma}")
@@ -676,6 +709,8 @@ def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo, institucion=
     datos = {"plataforma": plataforma, "cuenta": cuenta, "nombre": nombre, "categoria": categoria}
     if institucion:
         datos["institucion"] = institucion
+    if (candidato or "").strip():
+        datos["candidato"] = nombre_candidato(candidato)
     datos["respaldo"] = respaldo.strip()
     entrada = yaml.safe_dump([datos], sort_keys=False, allow_unicode=True, width=100)
     ruta = RAIZ / "cuentas.yaml"
@@ -688,6 +723,58 @@ def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo, institucion=
     ruta.write_text(texto, encoding="utf-8")
     return (f"Cuenta agregada: {nombre} ({plataforma}: {cuenta}), {CATEGORIAS[categoria]}"
             + (f": {institucion}." if institucion else "."))
+
+
+def agregar_candidato(nombre, cargo, estado, partido=None, alias=None):
+    """Agrega un candidato a candidatos.yaml o, si ya está (por nombre o alias), lo actualiza.
+
+    Los comentarios del comienzo del archivo se conservan; la lista la maneja este script.
+    `alias` son otros nombres con los que lo mencionan (separados por comas o en líneas).
+    """
+    nombre = re.sub(r"\s+", " ", nombre or "").strip()
+    if not nombre:
+        raise ErrorArchivo("Falta el nombre del candidato.")
+    if cargo not in CARGOS:
+        raise ErrorArchivo(f"Cargo no válido: {cargo}")
+    if estado not in ESTADOS_CANDIDATO:
+        raise ErrorArchivo(f"Estado no válido: {estado}")
+    alias = [a.strip() for a in re.split(r"[,\n]", alias or "") if a.strip()]
+    lista = candidatos()
+    actual = next((c for c in lista if nombre_candidato(nombre, [c]) == c["nombre"]), None)
+    hoy = ahora().date().isoformat()
+    if actual:
+        cambios = []
+        if actual.get("cargo") != cargo:
+            cambios.append(f"cargo: {actual.get('cargo')} → {cargo}")
+        if actual.get("estado") != estado:
+            cambios.append(f"estado: {actual.get('estado')} → {estado}")
+        if (partido or "").strip() and actual.get("partido") != partido.strip():
+            cambios.append(f"partido: {actual.get('partido') or '—'} → {partido.strip()}")
+            actual["partido"] = partido.strip()
+        nuevos = [a for a in alias if sin_tildes(a) not in {sin_tildes(x) for x in
+                                                           [actual["nombre"], *(actual.get("alias") or [])]}]
+        if nuevos:
+            actual["alias"] = (actual.get("alias") or []) + nuevos
+            cambios.append("alias: " + ", ".join(nuevos))
+        actual["cargo"], actual["estado"] = cargo, estado
+        if not cambios:
+            return f"{actual['nombre']} ya estaba así en candidatos.yaml."
+        actual.setdefault("historial", []).append({"fecha": hoy, "cambio": "; ".join(cambios)})
+        mensaje = f"Candidato actualizado: {actual['nombre']} ({'; '.join(cambios)})."
+    else:
+        nuevo = {"nombre": nombre, "cargo": cargo, "partido": (partido or "").strip() or None,
+                 "estado": estado}
+        if alias:
+            nuevo["alias"] = alias
+        nuevo["historial"] = [{"fecha": hoy, "cambio": f"agregado como {estado}"}]
+        lista.append(nuevo)
+        mensaje = f"Candidato agregado: {nombre}, {cargo}, {estado}."
+    ruta = RAIZ / "candidatos.yaml"
+    texto = ruta.read_text(encoding="utf-8") if ruta.exists() else ""
+    cabecera = texto.split("\ncandidatos:")[0] if "\ncandidatos:" in texto else texto.rstrip("\n")
+    cuerpo = yaml.safe_dump({"candidatos": lista}, sort_keys=False, allow_unicode=True, width=100)
+    ruta.write_text((cabecera + "\n" if cabecera else "") + cuerpo, encoding="utf-8")
+    return mensaje
 
 
 PALABRAS_TIPO = (
@@ -723,12 +810,14 @@ def procesar_buzon(carpeta):
             (t for patron, t in PALABRAS_TIPO if re.search(patron, texto, re.I)), "otro")
         lugar = re.search(r"^lugar:[ \t]*(\S.{0,59})$", texto, re.M) or re.search(r"comuna\s*\d+", texto, re.I)
         lugar = (lugar.group(1).strip() if lugar.re.groups else lugar.group(0).capitalize()) if lugar else None
+        candidato = re.search(r"^candidato:[ \t]*(\S.{0,99})$", texto, re.M)
+        candidato = candidato.group(1).strip() if candidato else None
         try:
             if partes.get("archivos"):
                 rutas = sorted(p for p in partes["archivos"].rglob("*") if p.is_file())
                 if rutas:
                     try:
-                        hecho, _ = archivar_archivos(rutas, tipo, lugar)
+                        hecho, _ = archivar_archivos(rutas, tipo, lugar, candidato)
                         informe.append(f"- {hecho.name}: {TIPOS_ARCHIVO[tipo].lower()}")
                     except ErrorArchivo as e:
                         informe.append(f"- un envío no se archivó: {e}")
@@ -736,7 +825,7 @@ def procesar_buzon(carpeta):
             enlaces = list(dict.fromkeys(u.rstrip(".,;)") for u in re.findall(r"https?://\S+", texto)))
             while enlaces:
                 try:
-                    hecho, _ = archivar_enlace(enlaces[0])
+                    hecho, _ = archivar_enlace(enlaces[0], candidato)
                     informe.append(f"- {hecho.name}: enlace")
                 except ErrorArchivo as e:
                     informe.append(f"- un enlace no se archivó: {e}")
@@ -897,7 +986,12 @@ def desde_issue(prueba=False):
         return None, [agregar_cuenta(campos.get("Plataforma") or "", campos.get("Cuenta o usuario"),
                                      campos.get("Nombre") or "", campos.get("Categoría") or "",
                                      campos.get("Respaldo") or "", campos.get("Tipo de institución"),
-                                     campos.get("Otra institución u órgano"))]
+                                     campos.get("Otra institución u órgano"),
+                                     campos.get("Candidato relacionado"))]
+    if "Nombre del candidato" in campos:
+        return None, [agregar_candidato(campos.get("Nombre del candidato"), campos.get("Cargo") or "",
+                                        campos.get("Estado") or "", campos.get("Partido o movimiento"),
+                                        campos.get("Otros nombres"))]
     if "Código de la pieza" in campos:
         carpeta = reclasificar((campos["Código de la pieza"] or "").strip(),
                                campos.get("Nueva categoría") or "", campos.get("Confianza") or "",
@@ -950,6 +1044,11 @@ def main(argv=None):
     ac.add_argument("--respaldo", required=True)
     ac.add_argument("--institucion", choices=INSTITUCIONES, help="solo para la categoría institucion")
     ac.add_argument("--otra", help="nombre del órgano si no está en la lista de --institucion")
+    ac.add_argument("--candidato", help="candidato al que pertenece o apoya la cuenta")
+    ca = sub.add_parser("candidato", help="agrega o actualiza un candidato en candidatos.yaml")
+    ca.add_argument("--nombre", required=True); ca.add_argument("--cargo", required=True, choices=CARGOS)
+    ca.add_argument("--estado", required=True, choices=ESTADOS_CANDIDATO)
+    ca.add_argument("--partido"); ca.add_argument("--alias", help="otros nombres, separados por comas")
     bz = sub.add_parser("buzon"); bz.add_argument("carpeta")
     sub.add_parser("sellos")
     v = sub.add_parser("verificar"); v.add_argument("id"); v.add_argument("--carpeta")
@@ -967,7 +1066,10 @@ def main(argv=None):
             return 0
         if args.orden == "agregar-cuenta":
             escribir(agregar_cuenta(args.plataforma, args.cuenta, args.nombre, args.categoria,
-                                    args.respaldo, args.institucion, args.otra))
+                                    args.respaldo, args.institucion, args.otra, args.candidato))
+            return 0
+        if args.orden == "candidato":
+            escribir(agregar_candidato(args.nombre, args.cargo, args.estado, args.partido, args.alias))
             return 0
         if args.orden == "buzon":
             escribir("\n".join(procesar_buzon(args.carpeta)) or "El buzón está vacío.")
