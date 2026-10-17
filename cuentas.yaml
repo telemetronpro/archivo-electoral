@@ -1,0 +1,30 @@
+# Cuentas públicas de las que se guarda el enlace, la cuenta y los metadatos.
+# De cualquier cuenta que NO esté aquí se guarda solo la pieza, sin saber de quién era.
+#
+# Solo van actores públicos: candidatos, campañas, partidos, agencias o personas
+# contratadas por una campaña, personalidades públicas e influenciadores, medios y
+# entidades. Nunca cuentas de ciudadanos comunes.
+#
+# La forma fácil de agregar una cuenta es el formulario "Agregar una cuenta pública".
+#
+# plataforma: tiktok | instagram | facebook | youtube | x | threads | telegram | web
+# cuenta:     el usuario (@ejemplo), el enlace del perfil o, para "web", el dominio
+# alias:      otros nombres con los que la plataforma muestra la cuenta (opcional)
+# categoria:  campaña-oficial | tercero-contratado | personalidad-publica | otro-actor-publico
+#             (personalidad-publica: apoya a un candidato y no se sabe si le pagan; si
+#             aparece prueba de pago, sus piezas se reclasifican como tercero-contratado)
+# respaldo:   enlace que muestra que la cuenta es de ese actor (su sitio oficial, el
+#             formulario de inscripción, un informe de Cuentas Claras...)
+
+cuentas:
+  # - plataforma: tiktok
+  #   cuenta: "@ejemplo2027"
+  #   nombre: Campaña de Ejemplo a la Alcaldía de Cali
+  #   categoria: campaña-oficial
+  #   respaldo: https://ejemplo2027.co
+  #
+  # - plataforma: web
+  #   cuenta: ejemplo2027.co
+  #   nombre: Campaña de Ejemplo a la Alcaldía de Cali
+  #   categoria: campaña-oficial
+  #   respaldo: https://ejemplo2027.co

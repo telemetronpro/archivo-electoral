@@ -1,0 +1,95 @@
+name: Archivar
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      enlace:
+        description: Enlace a archivar
+        required: true
+      prueba:
+        description: Solo probar (no guarda nada en el repositorio)
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+
+# Una pieza a la vez, para que los códigos no se repitan.
+concurrency:
+  group: repositorio
+  cancel-in-progress: false
+
+jobs:
+  archivar:
+    # Se procesa lo que envía el equipo. Lo que envía otra persona se procesa cuando
+    # alguien del equipo le pone la etiqueta "archivar".
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      ((contains(github.event.issue.body, '### Enlace') || contains(github.event.issue.body, '### Tipo de pieza') || contains(github.event.issue.body, '### Código de la pieza') || contains(github.event.issue.body, '### Cuenta o usuario')) &&
+      ((github.event.action == 'opened' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'archivar')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+      - run: pip install -r requirements.txt
+
+      - name: Archivar
+        id: archivar
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ENLACE: ${{ inputs.enlace }}
+          PRUEBA: ${{ inputs.prueba && 'true' || 'false' }}
+          GH_TOKEN: ${{ github.token }}
+          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
+          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python herramientas/archivar.py --resultado resultado.md enlace "$ENLACE"
+          else
+            python herramientas/archivar.py --resultado resultado.md desde-issue
+          fi
+
+      - name: Guardar en el repositorio
+        if: success() && !(github.event_name == 'workflow_dispatch' && inputs.prueba)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add piezas cuentas.yaml
+          git diff --cached --quiet && exit 0
+          ids=$(git diff --cached --name-only | grep 'ficha.yaml$' | xargs -r -n1 dirname | xargs -r -n1 basename | tr '\n' ' ')
+          git commit -q -m "${ids:+Pieza $ids}${ids:-Agregar una cuenta pública}"
+          git pull -q --rebase origin "${GITHUB_REF_NAME}"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Guardar la prueba para revisarla
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prueba
+          path: |
+            salida/
+            resultado.md
+          if-no-files-found: ignore
+
+      - name: Responder en el issue
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMERO: ${{ github.event.issue.number }}
+        run: |
+          [ -f resultado.md ] || echo "❌ Falló el proceso. Revise el registro de GitHub Actions." > resultado.md
+          gh issue comment "$NUMERO" --body-file resultado.md
+          if [ "${{ steps.archivar.outcome }}" = "success" ]; then
+            # Se quita del issue lo que se envió (enlace y adjuntos): ya está en el archivo.
+            gh issue edit "$NUMERO" --body "Archivado. El contenido del formulario se quitó de aquí; está en la ficha de la pieza."
+            gh issue close "$NUMERO"
+          fi

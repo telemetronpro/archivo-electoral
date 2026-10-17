@@ -1,0 +1,45 @@
+name: Cambiar la fuente de una pieza (equipo)
+description: Cuando aparece evidencia de quién publicó o pagó una pieza.
+title: "Reclasificar"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Solo el equipo puede usar este formulario. El cambio queda en el historial de la pieza junto con la evidencia; lo anterior no se borra.
+  - type: input
+    id: id
+    attributes:
+      label: Código de la pieza
+      placeholder: cali-2027-000143
+    validations:
+      required: true
+  - type: dropdown
+    id: categoria
+    attributes:
+      label: Nueva categoría
+      options:
+        - campaña-oficial
+        - tercero-contratado
+        - tercero-sin-declarar
+        - personalidad-publica
+        - otro-actor-publico
+        - desconocida
+    validations:
+      required: true
+  - type: dropdown
+    id: confianza
+    attributes:
+      label: Confianza
+      options:
+        - alta
+        - media
+        - baja
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: "Una línea por cada prueba, con su enlace (Biblioteca de Anuncios, Cuentas Claras, otra pieza del archivo...). Sin datos de ciudadanos."
+    validations:
+      required: true

@@ -1,0 +1,8 @@
+yt-dlp
+gallery-dl
+opentimestamps-client
+internetarchive
+pillow
+pillow-heif
+pyyaml
+requests

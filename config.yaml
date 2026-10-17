@@ -1,0 +1,4 @@
+# Cambie esto al copiar la plantilla para otro municipio.
+municipio: Santiago de Cali
+prefijo: cali                    # va en el código de cada pieza: cali-2027-000001
+eleccion: territoriales-2027     # elecciones del 31 de octubre de 2027

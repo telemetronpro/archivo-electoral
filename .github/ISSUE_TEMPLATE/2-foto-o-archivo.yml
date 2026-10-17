@@ -1,0 +1,49 @@
+name: Subir una foto o un archivo
+description: Vallas, pasacalles, volantes o piezas que llegan por WhatsApp o Telegram.
+title: "Foto o archivo"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Arrastre la foto o el video al recuadro y envíe. El sistema le quita al archivo la ubicación, la fecha de la cámara y el modelo del teléfono antes de guardarlo.
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de pieza
+      options:
+        - Valla o pasacalle
+        - Volante o afiche
+        - Cadena de WhatsApp o Telegram
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: archivos
+    attributes:
+      label: Foto o video
+      description: Arrastre aquí uno o varios archivos.
+    validations:
+      required: true
+  - type: input
+    id: lugar
+    attributes:
+      label: Comuna o barrio
+      description: Solo para vallas, pasacalles y volantes. No ponga la dirección exacta.
+  - type: input
+    id: candidato
+    attributes:
+      label: Candidato, partido o campaña
+  - type: textarea
+    id: nota
+    attributes:
+      label: Nota
+      description: "Opcional. No escriba nombres ni datos de personas que no sean candidatos o campañas."
+  - type: checkboxes
+    id: privacidad
+    attributes:
+      label: Privacidad
+      options:
+        - label: En la foto no se ven caras de personas ni placas de carros (salvo las de la propia propaganda).
+          required: true
+        - label: No es una captura de un chat y no se ven nombres ni números de teléfono.
+          required: true

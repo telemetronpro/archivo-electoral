@@ -1,0 +1,49 @@
+name: Agregar una cuenta pública (equipo)
+description: Un candidato, campaña, partido, agencia, medio, personalidad pública o influenciador.
+title: "Agregar cuenta"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Solo el equipo puede usar este formulario. De las cuentas de esta lista se guarda todo: el enlace, la cuenta, la fecha y los datos de la publicación, y el sistema guarda cada día lo que publiquen.
+
+        **Nunca agregue la cuenta de un ciudadano común.** Una personalidad pública o un influenciador sí: publican para el público y su alcance es lo que los hace relevantes.
+  - type: dropdown
+    id: plataforma
+    attributes:
+      label: Plataforma
+      options: [tiktok, instagram, facebook, youtube, x, threads, telegram, web]
+    validations:
+      required: true
+  - type: input
+    id: cuenta
+    attributes:
+      label: Cuenta o usuario
+      description: "El usuario (@ejemplo), el enlace del perfil o, si es una página web, el dominio."
+    validations:
+      required: true
+  - type: input
+    id: nombre
+    attributes:
+      label: Nombre
+      placeholder: Campaña de Ejemplo a la Alcaldía de Cali
+    validations:
+      required: true
+  - type: dropdown
+    id: categoria
+    attributes:
+      label: Categoría
+      options:
+        - campaña-oficial
+        - tercero-contratado
+        - personalidad-publica
+        - otro-actor-publico
+    validations:
+      required: true
+  - type: input
+    id: respaldo
+    attributes:
+      label: Respaldo
+      description: "Enlace que muestre que la cuenta es de ese actor y que es pública: su sitio oficial, una nota de prensa, el perfil verificado, un informe de Cuentas Claras."
+    validations:
+      required: true

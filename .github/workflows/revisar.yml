@@ -1,0 +1,20 @@
+name: Revisar
+
+# Comprueba que ninguna ficha rompa las reglas (por ejemplo, que no guarde el enlace
+# de una cuenta que no es pública) y corre las pruebas del script.
+on:
+  push:
+  pull_request:
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python herramientas/archivar.py revisar
+      - run: python -m unittest discover -s pruebas -v

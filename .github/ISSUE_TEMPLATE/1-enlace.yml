@@ -1,0 +1,27 @@
+name: Guardar un enlace
+description: Una publicación, video, anuncio o página web con propaganda electoral.
+title: "Enlace"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pegue el enlace y envíe. El sistema guarda la pieza, le pide una copia al Internet Archive y la sella con fecha. En unos minutos le responde aquí mismo con el código de la pieza.
+
+        **Privacidad:** si la cuenta no es de un candidato, campaña, partido, agencia o medio de la lista (`cuentas.yaml`), se guarda solo la pieza, sin el enlace ni el nombre de la cuenta.
+  - type: input
+    id: enlace
+    attributes:
+      label: Enlace
+      placeholder: https://www.tiktok.com/@cuenta/video/...
+    validations:
+      required: true
+  - type: input
+    id: candidato
+    attributes:
+      label: Candidato, partido o campaña
+      description: A quién favorece o ataca, si lo sabe.
+  - type: textarea
+    id: nota
+    attributes:
+      label: Nota
+      description: "Opcional. No escriba nombres ni datos de personas que no sean candidatos o campañas."
