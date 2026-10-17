@@ -698,12 +698,14 @@ PALABRAS_TIPO = (
 
 
 def procesar_buzon(carpeta):
-    """Archiva lo que llegó al buzón de OnionShare y lo borra.
+    """Archiva lo que el equipo aprobó en el buzón y lo borra.
 
-    OnionShare guarda cada envío como <fecha>/<id>-message.txt (el mensaje) y <fecha>/<id>/
-    (los archivos). Del mensaje solo se usan los enlaces, el tipo de pieza y la comuna; el
-    resto del texto no se guarda en ninguna parte. Si algo falla por la red, el envío se
-    deja para el siguiente intento.
+    Cada envío es <fecha>/<id>-message.txt (el mensaje) y <fecha>/<id>/ (los archivos), como
+    los guarda OnionShare y como los guarda buzon/web.py. El buzón web escribe al comienzo del
+    mensaje las líneas "tipo:" y "lugar:"; si no están, el tipo y la comuna se deducen del
+    texto. Del mensaje solo se usan los enlaces, el tipo y el lugar; el resto del texto no se
+    guarda en ninguna parte. Si algo falla por la red, el envío se deja para el siguiente
+    intento.
     """
     carpeta = Path(carpeta)
     informe = []
@@ -716,9 +718,11 @@ def procesar_buzon(carpeta):
     for (_, id_envio), partes in envios.items():
         mensaje = partes.get("mensaje")
         texto = mensaje.read_text(encoding="utf-8", errors="replace") if mensaje else ""
-        tipo = next((t for patron, t in PALABRAS_TIPO if re.search(patron, texto, re.I)), "otro")
-        comuna = re.search(r"comuna\s*\d+", texto, re.I)
-        lugar = comuna.group(0).capitalize() if comuna else None
+        tipo = re.search(r"^tipo:[ \t]*(\S+)[ \t]*$", texto, re.M)
+        tipo = tipo.group(1) if tipo and tipo.group(1) in TIPOS_ARCHIVO else next(
+            (t for patron, t in PALABRAS_TIPO if re.search(patron, texto, re.I)), "otro")
+        lugar = re.search(r"^lugar:[ \t]*(\S.{0,59})$", texto, re.M) or re.search(r"comuna\s*\d+", texto, re.I)
+        lugar = (lugar.group(1).strip() if lugar.re.groups else lugar.group(0).capitalize()) if lugar else None
         try:
             if partes.get("archivos"):
                 rutas = sorted(p for p in partes["archivos"].rglob("*") if p.is_file())

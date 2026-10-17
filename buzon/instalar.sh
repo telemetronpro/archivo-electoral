@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Instala el buzón anónimo (OnionShare sobre Tor) en una computadora con Debian, Ubuntu
-# o Raspberry Pi OS que quede prendida. Instrucciones completas en docs/buzon.md.
+# Instala el buzón en una computadora con Debian, Ubuntu o Raspberry Pi OS que quede prendida.
+# El buzón es una página web sencilla con dos direcciones: un enlace normal (Tailscale Funnel)
+# para cualquier persona, y una dirección .onion (Tor) para quien quiera el máximo anonimato.
+# Instrucciones completas en docs/buzon.md.
 #
 # Uso: sudo bash instalar.sh https://github.com/USUARIO/archivo-electoral
 set -euo pipefail
@@ -8,11 +10,11 @@ set -euo pipefail
 REPO_URL="${1:?Falta el enlace del repositorio, por ejemplo https://github.com/USUARIO/archivo-electoral}"
 REPO="${REPO_URL#https://github.com/}"; REPO="${REPO%.git}"; REPO="${REPO%/}"
 CASA=/var/lib/buzon
+PUERTO=8080
 
 echo "== Instalando programas"
 apt-get update -q
-apt-get install -y -q tor ffmpeg git python3-venv gh
-systemctl disable --now tor >/dev/null 2>&1 || true  # OnionShare arranca su propio Tor
+apt-get install -y -q tor ffmpeg git python3-venv gh qrencode curl
 
 id buzon >/dev/null 2>&1 || useradd --system --create-home --home-dir "$CASA" --shell /usr/sbin/nologin buzon
 
@@ -20,9 +22,11 @@ if [ ! -f /etc/buzon.env ]; then
   echo
   echo "Pegue el token de GitHub (docs/buzon.md, paso 2). No se verá al pegarlo. Luego pulse Enter:"
   read -rs TOKEN
-  ( umask 027; printf 'GH_TOKEN=%s\nGITHUB_REPOSITORY=%s\n' "$TOKEN" "$REPO" > /etc/buzon.env )
+  CLAVE=$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 20)
+  ( umask 027; printf 'GH_TOKEN=%s\nGITHUB_REPOSITORY=%s\nBUZON_CLAVE=%s\n' "$TOKEN" "$REPO" "$CLAVE" > /etc/buzon.env )
   chown root:buzon /etc/buzon.env
 fi
+grep -q '^BUZON_CLAVE=' /etc/buzon.env || echo "BUZON_CLAVE=$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 20)" >> /etc/buzon.env
 
 echo "== Descargando el archivo electoral"
 sudo -u buzon bash -euo pipefail -c "
@@ -33,23 +37,36 @@ sudo -u buzon bash -euo pipefail -c "
   git -C repo config user.email 'buzon@users.noreply.github.com'
   [ -d venv ] || python3 -m venv venv
   venv/bin/pip install -q --upgrade pip
-  venv/bin/pip install -q -r repo/requirements.txt onionshare-cli
-  mkdir -p recibido
+  venv/bin/pip install -q -r repo/requirements.txt
+  mkdir -p recibido/pendiente recibido/aprobado
 "
 
-echo "== Configurando el servicio"
+echo "== Dirección .onion (Tor)"
+if ! grep -q "HiddenServiceDir /var/lib/tor/buzon/" /etc/tor/torrc; then
+  printf '\n# Buzón del archivo electoral\nHiddenServiceDir /var/lib/tor/buzon/\nHiddenServicePort 80 127.0.0.1:%s\n' "$PUERTO" >> /etc/tor/torrc
+fi
+systemctl enable tor >/dev/null 2>&1 || true
+systemctl restart tor
+for _ in $(seq 60); do [ -f /var/lib/tor/buzon/hostname ] && break; sleep 2; done
+ONION=$(cat /var/lib/tor/buzon/hostname)
+grep -q '^BUZON_ONION=' /etc/buzon.env || echo "BUZON_ONION=$ONION" >> /etc/buzon.env
+
+echo "== Configurando los servicios"
 cat > /etc/systemd/system/buzon.service <<UNIDAD
 [Unit]
-Description=Buzón anónimo del archivo electoral (OnionShare)
+Description=Buzón del archivo electoral (página web)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=buzon
-WorkingDirectory=$CASA
-ExecStart=$CASA/venv/bin/onionshare-cli --receive --public --persistent $CASA/sesion.json --title "Buzón del archivo electoral: suba fotos o pegue enlaces. No escriba su nombre." --data-dir $CASA/recibido
+WorkingDirectory=$CASA/repo
+EnvironmentFile=/etc/buzon.env
+Environment=BUZON_DATOS=$CASA/recibido
+Environment=BUZON_PUERTO=$PUERTO
+ExecStart=$CASA/venv/bin/python buzon/web.py
 Restart=always
-RestartSec=30
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
@@ -57,21 +74,21 @@ UNIDAD
 
 cat > /etc/systemd/system/buzon-procesar.service <<UNIDAD
 [Unit]
-Description=Archivar lo que llegó al buzón
+Description=Archivar lo que el equipo aprobó en el buzón
 
 [Service]
 Type=oneshot
 User=buzon
 EnvironmentFile=/etc/buzon.env
 Environment=PATH=$CASA/venv/bin:/usr/local/bin:/usr/bin:/bin
-Environment=RECIBIDO=$CASA/recibido
+Environment=RECIBIDO=$CASA/recibido/aprobado
 Environment=ARCHIVO_SERIE=b
 ExecStart=$CASA/repo/buzon/procesar.sh
 UNIDAD
 
 cat > /etc/systemd/system/buzon-procesar.timer <<UNIDAD
 [Unit]
-Description=Archivar lo que llegó al buzón cada 15 minutos
+Description=Archivar lo aprobado en el buzón cada 15 minutos
 
 [Timer]
 OnBootSec=5min
@@ -83,20 +100,18 @@ UNIDAD
 
 systemctl daemon-reload
 systemctl enable --now buzon.service buzon-procesar.timer
+systemctl restart buzon.service
 
-echo "== Esperando a que Tor publique la dirección (puede tardar unos minutos)"
-for _ in $(seq 60); do
-  DIRECCION=$(journalctl -u buzon -n 200 --no-pager | grep -oE 'https?://[a-z2-7]{56}\.onion[^ ]*' | tail -1 || true)
-  [ -n "$DIRECCION" ] && break
-  sleep 5
-done
-if [ -n "${DIRECCION:-}" ]; then
-  echo
-  echo "Listo. La dirección del buzón es:"
-  echo
-  echo "    $DIRECCION"
-  echo
-  echo "Es siempre la misma, aunque la computadora se reinicie. Publíquela en el README."
-else
-  echo "Tor aún no publica la dirección. Mírela más tarde con: sudo bash $CASA/repo/buzon/direccion.sh"
+echo
+read -rp "¿Quiere también un enlace normal, que se abra en cualquier navegador sin instalar Tor? [S/n] " NORMAL
+if [ "${NORMAL,,}" != "n" ]; then
+  echo "== Enlace normal (Tailscale Funnel)"
+  command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
+  echo "Si aparece un enlace de inicio de sesión, ábralo en el celular o en otra computadora y entre"
+  echo "con su cuenta de Google, Microsoft o GitHub."
+  tailscale up --hostname=buzon
+  echo "Si aparece otro enlace para habilitar Funnel, ábralo y acéptelo; el comando sigue solo."
+  tailscale funnel --bg "$PUERTO"
 fi
+
+bash "$CASA/repo/buzon/direccion.sh"

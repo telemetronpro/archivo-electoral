@@ -6,7 +6,7 @@ Guarda la propaganda electoral antes de que la borren, de forma que cualquiera p
 
 ## Cómo aportar
 
-**Sin cuenta y de forma anónima:** use el [buzón anónimo](docs/buzon.md) con el navegador Tor. Suba las fotos o pegue los enlaces y envíe. Dirección: *(se publica aquí cuando el buzón esté montado)*
+**Lo más fácil, sin cuenta y sin dar su nombre:** abra el [buzón](docs/buzon.md), elija la foto o pegue el enlace y pulse Enviar. Se abre en cualquier celular. Enlace: *(se publica aquí cuando el buzón esté montado)*. Para el máximo anonimato, el buzón tiene también una dirección para el navegador Tor.
 
 **Con una cuenta de GitHub** (es gratis), el resultado le llega en minutos:
 
@@ -44,5 +44,5 @@ Con el script: `python herramientas/archivar.py verificar cali-2027-000143` desc
 - [Cómo se decide quién está detrás de una pieza, y por qué se puede confiar](docs/metodo.md)
 - [Cómo montar el archivo en otro municipio](docs/nuevo-municipio.md)
 - Mantener al día [`cuentas.yaml`](cuentas.yaml) con el formulario [Agregar una cuenta pública](../../issues/new?template=4-agregar-cuenta.yml): cuando se inscriba cada candidato, sus cuentas y las de su campaña; las personalidades públicas e influenciadores que lo apoyen, y las instituciones (Presidencia, Gobernación, Alcaldía o cualquier otro órgano) y sus funcionarios.
-- [Montar el buzón anónimo](docs/buzon.md)
+- [Montar el buzón y revisar lo que llega](docs/buzon.md)
 - El script también funciona desde la línea de comandos: `python herramientas/archivar.py -h`.

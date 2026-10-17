@@ -10,9 +10,9 @@ Toma unos 15 minutos y no hay que programar nada.
 6. En **Settings → Collaborators**, agregue a las personas del equipo. Lo que ellas envían se archiva sin esperar aprobación.
 7. Pruebe: en **Actions → Archivar → Run workflow**, pegue un enlace y deje marcada la casilla de prueba. Al terminar, el resultado queda en un archivo descargable `prueba` en esa misma página.
 
-## Opcional: buzón anónimo
+## Opcional: buzón
 
-Para recibir piezas sin que haga falta una cuenta y sin saber quién las envía, monte el [buzón anónimo](buzon.md). Necesita una computadora que quede prendida.
+Para recibir piezas de cualquier persona, sin que haga falta una cuenta y sin saber quién las envía, monte el [buzón](buzon.md). Necesita una computadora que quede prendida.
 
 ## Opcional: copia en el Internet Archive
 

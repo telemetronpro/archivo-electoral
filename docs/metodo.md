@@ -31,7 +31,8 @@ Comentarios, personas etiquetadas y datos de quienes interactúan con la publica
 
 Lo que **no** controla el archivo, y conviene saberlo:
 
-- Quien envía algo con un formulario usa su cuenta de GitHub, y el formulario queda en los issues del repositorio. Después de archivar, el sistema borra el contenido del formulario y cierra el issue, pero GitHub conserva el autor del issue y su historial de ediciones. Quien no quiera dejar ningún rastro debe usar el [buzón anónimo](buzon.md), que funciona sobre Tor: ni el equipo puede saber quién envió algo.
+- Quien envía algo con un formulario usa su cuenta de GitHub, y el formulario queda en los issues del repositorio. Después de archivar, el sistema borra el contenido del formulario y cierra el issue, pero GitHub conserva el autor del issue y su historial de ediciones. Quien no quiera dejar ningún rastro debe usar el [buzón](buzon.md), que no pide cuenta ni guarda direcciones IP; con su dirección para el navegador Tor, nadie puede saber quién envió algo.
+- Lo que llega al buzón no se publica hasta que alguien del equipo lo revisa, para que nadie pueda usar el archivo para difundir contenido ilegal o violento.
 - Lo que se ve dentro de la imagen no se puede limpiar automáticamente: si un video de TikTok trae la marca de agua con el usuario, o si en la foto de una valla sale una persona, queda en el archivo. El formulario de fotos le pide a quien envía que lo confirme, y el equipo debe borrar las piezas que no cumplan.
 - La propaganda misma puede mostrar personas (testimonios, fotos de eventos). Eso lo publicó la campaña y es parte de la pieza.
 

@@ -6,3 +6,5 @@ pillow
 pillow-heif
 pyyaml
 requests
+flask
+waitress

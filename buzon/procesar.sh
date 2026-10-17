@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Archiva lo que llegó al buzón, lo borra de la computadora y sube las piezas a GitHub.
-# Lo corre buzon-procesar.timer cada 15 minutos.
+# Archiva lo que el equipo aprobó en el buzón, lo borra de la computadora y sube las piezas
+# a GitHub. Lo corre buzon-procesar.timer cada 15 minutos.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 RECIBIDO="${RECIBIDO:-/var/lib/buzon/recibido}"
