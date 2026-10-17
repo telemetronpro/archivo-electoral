@@ -90,6 +90,15 @@ CAMPOS_METADATOS = (
 )
 
 
+ULTIMO_ERROR_DESCARGA = {"texto": ""}  # para explicar por qué falló una descarga
+
+
+def recordar_error(r):
+    lineas = [l for l in (r.stderr or "").splitlines() if "ERROR" in l or "error" in l.lower()]
+    if lineas:
+        ULTIMO_ERROR_DESCARGA["texto"] = lineas[-1].strip()[:300]
+
+
 class ErrorArchivo(Exception):
     """Error que se le muestra tal cual a quien envió la pieza."""
 
@@ -225,6 +234,7 @@ def descargar_con_yt_dlp(url, carpeta):
                 "-o", str(carpeta / "pieza.%(ext)s"), "--", url], timeout=900)
     info = next(carpeta.glob("*.info.json"), None)
     if r.returncode != 0 or not info:
+        recordar_error(r)
         for sobrante in carpeta.iterdir():  # descargas a medias
             sobrante.unlink()
         return None
@@ -238,6 +248,7 @@ def descargar_con_gallery_dl(url, carpeta):
                 "-f", "pieza-{num}.{extension}", "--", url], timeout=900)
     jsons = sorted(carpeta.glob("*.json"))
     if r.returncode != 0 or not jsons:
+        recordar_error(r)
         for sobrante in carpeta.iterdir():
             sobrante.unlink()
         return None
@@ -514,11 +525,16 @@ def archivar_enlace(url, candidato=None, nota=None, prueba=False, cuenta=None):
 
     metadatos = {}
     if plataforma not in ("web", "biblioteca-anuncios-meta"):
-        crudos = descargar_con_yt_dlp(url, trabajo) or descargar_con_gallery_dl(url, trabajo)
+        ULTIMO_ERROR_DESCARGA["texto"] = ""
+        crudos = descargar_con_yt_dlp(url, trabajo)
+        error_yt_dlp = ULTIMO_ERROR_DESCARGA["texto"]
+        crudos = crudos or descargar_con_gallery_dl(url, trabajo)
         metadatos = limpiar_metadatos(crudos) if crudos else {}
         if not crudos:
+            detalle = error_yt_dlp or ULTIMO_ERROR_DESCARGA["texto"]
             avisos.append("No se pudo descargar el contenido (puede pedir inicio de sesión). "
-                          "Si lo tiene guardado, súbalo con el formulario de foto o archivo.")
+                          "Si lo tiene guardado, súbalo con el formulario de foto o archivo."
+                          + (f" Detalle: {detalle}" if detalle else ""))
     medios = sorted(p for p in trabajo.iterdir() if p.is_file())
 
     # La pauta de la Biblioteca de Anuncios es pública por ley ("Pagado por").
@@ -528,6 +544,7 @@ def archivar_enlace(url, candidato=None, nota=None, prueba=False, cuenta=None):
     if not atribuida:
         if not medios:
             raise ErrorArchivo(
+                " ".join(avisos) + " "
                 "La cuenta no está en cuentas.yaml y no se pudo bajar la pieza. Por privacidad, "
                 "de cuentas que no son de actores públicos solo se guarda la pieza, nunca el "
                 "enlace. Si la cuenta es de una campaña, agencia o medio, agréguela a "
