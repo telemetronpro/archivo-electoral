@@ -2,17 +2,22 @@
 # De cualquier cuenta que NO esté aquí se guarda solo la pieza, sin saber de quién era.
 #
 # Solo van actores públicos: candidatos, campañas, partidos, agencias o personas
-# contratadas por una campaña, personalidades públicas e influenciadores, medios y
-# entidades. Nunca cuentas de ciudadanos comunes.
+# contratadas por una campaña, personalidades públicas e influenciadores, medios e
+# instituciones públicas. Nunca cuentas de ciudadanos comunes.
 #
 # La forma fácil de agregar una cuenta es el formulario "Agregar una cuenta pública".
 #
 # plataforma: tiktok | instagram | facebook | youtube | x | threads | telegram | web
 # cuenta:     el usuario (@ejemplo), el enlace del perfil o, para "web", el dominio
 # alias:      otros nombres con los que la plataforma muestra la cuenta (opcional)
-# categoria:  campaña-oficial | tercero-contratado | personalidad-publica | otro-actor-publico
+# categoria:  campaña-oficial | tercero-contratado | personalidad-publica | institucion |
+#             otro-actor-publico
 #             (personalidad-publica: apoya a un candidato y no se sabe si le pagan; si
 #             aparece prueba de pago, sus piezas se reclasifican como tercero-contratado)
+# institucion: solo para la categoría institucion. Un tipo de la lista del formulario
+#             (Presidencia de la República, Gobernación, Alcaldía, Concejo municipal...) o el
+#             nombre de cualquier otro órgano. Vale para la cuenta de la entidad y para la del
+#             funcionario que la dirige (presidente, gobernador, alcalde...).
 # respaldo:   enlace que muestra que la cuenta es de ese actor (su sitio oficial, el
 #             formulario de inscripción, un informe de Cuentas Claras...)
 
@@ -28,3 +33,10 @@ cuentas:
   #   nombre: Campaña de Ejemplo a la Alcaldía de Cali
   #   categoria: campaña-oficial
   #   respaldo: https://ejemplo2027.co
+  #
+  # - plataforma: x
+  #   cuenta: "@GobValle"
+  #   nombre: Gobernación del Valle del Cauca
+  #   categoria: institucion
+  #   institucion: Gobernación
+  #   respaldo: https://www.valledelcauca.gov.co

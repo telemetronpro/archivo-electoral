@@ -1,5 +1,5 @@
 name: Agregar una cuenta pública (equipo)
-description: Un candidato, campaña, partido, agencia, medio, personalidad pública o influenciador.
+description: Un candidato, campaña, partido, agencia, medio, personalidad pública, influenciador o institución.
 title: "Agregar cuenta"
 body:
   - type: markdown
@@ -37,9 +37,37 @@ body:
         - campaña-oficial
         - tercero-contratado
         - personalidad-publica
+        - institucion
         - otro-actor-publico
     validations:
       required: true
+  - type: dropdown
+    id: institucion
+    attributes:
+      label: Tipo de institución
+      description: Solo si la categoría es "institucion". Vale para la cuenta de la entidad y para la del funcionario que la dirige (presidente, gobernador, alcalde...).
+      options:
+        - "Presidencia de la República"
+        - "Vicepresidencia"
+        - "Ministerio o departamento administrativo"
+        - "Gobernación"
+        - "Alcaldía"
+        - "Secretaría departamental o municipal"
+        - "Congreso"
+        - "Asamblea departamental"
+        - "Concejo municipal"
+        - "Junta administradora local"
+        - "Fuerza Pública (Policía, Ejército, Armada, Fuerza Aeroespacial)"
+        - "Organismo de control (Procuraduría, Contraloría, Defensoría, Personería)"
+        - "Organización electoral (Registraduría, CNE)"
+        - "Rama judicial o Fiscalía"
+        - "Entidad descentralizada o empresa pública"
+        - "Otra"
+  - type: input
+    id: otra
+    attributes:
+      label: Otra institución u órgano
+      description: Si no está en la lista, escriba aquí cuál es (por ejemplo, "Personería de Cali" o "Batallón Pichincha").
   - type: input
     id: respaldo
     attributes:

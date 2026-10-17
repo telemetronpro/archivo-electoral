@@ -2,7 +2,7 @@
 
 Guarda la propaganda electoral antes de que la borren, de forma que cualquiera pueda comprobar después **que existió, cuándo y quién la publicó o la pagó**. Empieza en Cali, para las elecciones territoriales del 31 de octubre de 2027, y cualquier municipio puede copiarlo.
 
-**No guarda datos personales de ciudadanos.** Solo se registra de quién es una pieza cuando la publicó un actor público: candidato, campaña, partido, agencia, medio, personalidad pública o influenciador. De cualquier otra fuente se guarda la pieza sola, sin enlace, sin cuenta y sin metadatos. Tampoco queda registrado quién la envió.
+**No guarda datos personales de ciudadanos.** Solo se registra de quién es una pieza cuando la publicó un actor público: candidato, campaña, partido, agencia, medio, personalidad pública, influenciador o institución pública. De cualquier otra fuente se guarda la pieza sola, sin enlace, sin cuenta y sin metadatos. Tampoco queda registrado quién la envió.
 
 ## Cómo aportar
 
@@ -27,7 +27,7 @@ Además, **cada día el sistema revisa por su cuenta las cuentas de [`cuentas.ya
 4. Se calcula la **huella** (SHA-256) de cada archivo y se sella con [OpenTimestamps](https://opentimestamps.org), que la ancla en Bitcoin. Eso prueba que el archivo existía ese día y que no ha cambiado.
 5. La ficha y las huellas quedan en la carpeta [`piezas/`](piezas); los archivos, en las [versiones (releases)](../../releases) del repositorio, una por mes.
 
-Cada ficha dice quién está detrás de la pieza y con qué evidencia: campaña oficial, tercero contratado, tercero sin declarar, personalidad pública o influenciador, otro actor público, desconocida o no atribuida. Cuando aparece evidencia nueva (la Biblioteca de Anuncios, los gastos de campaña en Cuentas Claras), el equipo cambia la clasificación con el formulario [Cambiar la fuente](../../issues/new?template=3-reclasificar.yml), y el cambio queda en el historial de la ficha. Lo anterior no se borra.
+Cada ficha dice quién está detrás de la pieza y con qué evidencia: campaña oficial, tercero contratado, tercero sin declarar, personalidad pública o influenciador, institución u órgano público, otro actor público, desconocida o no atribuida. Cuando aparece evidencia nueva (la Biblioteca de Anuncios, los gastos de campaña en Cuentas Claras), el equipo cambia la clasificación con el formulario [Cambiar la fuente](../../issues/new?template=3-reclasificar.yml), y el cambio queda en el historial de la ficha. Lo anterior no se borra.
 
 ## Cómo comprobar una pieza
 
@@ -43,6 +43,6 @@ Con el script: `python herramientas/archivar.py verificar cali-2027-000143` desc
 
 - [Cómo se decide quién está detrás de una pieza, y por qué se puede confiar](docs/metodo.md)
 - [Cómo montar el archivo en otro municipio](docs/nuevo-municipio.md)
-- Mantener al día [`cuentas.yaml`](cuentas.yaml) con el formulario [Agregar una cuenta pública](../../issues/new?template=4-agregar-cuenta.yml): cuando se inscriba cada candidato, sus cuentas y las de su campaña; y las personalidades públicas e influenciadores que lo apoyen.
+- Mantener al día [`cuentas.yaml`](cuentas.yaml) con el formulario [Agregar una cuenta pública](../../issues/new?template=4-agregar-cuenta.yml): cuando se inscriba cada candidato, sus cuentas y las de su campaña; las personalidades públicas e influenciadores que lo apoyen, y las instituciones (Presidencia, Gobernación, Alcaldía o cualquier otro órgano) y sus funcionarios.
 - [Montar el buzón anónimo](docs/buzon.md)
 - El script también funciona desde la línea de comandos: `python herramientas/archivar.py -h`.

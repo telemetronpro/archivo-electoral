@@ -22,6 +22,7 @@ body:
         - tercero-contratado
         - tercero-sin-declarar
         - personalidad-publica
+        - institucion
         - otro-actor-publico
         - desconocida
     validations:

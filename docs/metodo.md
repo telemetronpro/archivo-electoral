@@ -14,7 +14,7 @@ Un archivo guardado por una sola persona no prueba nada: podría haberlo inventa
 
 ## Privacidad: qué se guarda y qué no
 
-`cuentas.yaml` lista las cuentas de actores públicos: candidatos, campañas, partidos, agencias, medios, entidades, y personalidades públicas e influenciadores. Estos últimos entran porque publican para el público y su alcance es lo que los hace relevantes. Cada cuenta lleva un enlace que respalda que es pública.
+`cuentas.yaml` lista las cuentas de actores públicos: candidatos, campañas, partidos, agencias, medios, instituciones públicas, y personalidades públicas e influenciadores. Estos últimos entran porque publican para el público y su alcance es lo que los hace relevantes. Cada cuenta lleva un enlace que respalda que es pública.
 
 | | Cuenta en `cuentas.yaml` | Cualquier otra fuente | Foto o archivo subido |
 |---|---|---|---|
@@ -45,7 +45,8 @@ La clasificación se basa en evidencia citada y siempre lleva un nivel de confia
 | **Tercero contratado** | "Pagado por" a nombre de una agencia o persona distinta; ese proveedor aparece en los gastos reportados en **Cuentas Claras**; etiqueta de colaboración pagada |
 | **Tercero sin declarar** (sospecha) | La misma pieza sale a la vez en muchas cuentas sin relación aparente. Es un indicio, no una prueba: confianza baja hasta que aparezca otra evidencia |
 | **Personalidad pública o influenciador** | Su cuenta está en `cuentas.yaml`. Apoya a un candidato y no se sabe si le pagan; si aparece la prueba (colaboración pagada, "Pagado por", Cuentas Claras), pasa a tercero contratado |
-| **Otro actor público** | Medios, entidades, organizaciones |
+| **Institución u órgano público** | Cuenta de una entidad (Presidencia, Gobernación, Alcaldía, Concejo, Fuerza Pública, organismos de control, cualquier otro órgano) o del funcionario que la dirige. Importa porque la Constitución (art. 127) restringe la participación en política de los servidores públicos: una pieza institucional que favorece a un candidato es un hallazgo en sí mismo |
+| **Otro actor público** | Medios, organizaciones |
 
 Para separar a la campaña de un tercero contratado, lo que más sirve es Cuentas Claras: los informes de ingresos y gastos dicen a quién se le pagó y por qué. Como se publican después de la elección, cuando el contenido ya desapareció, hay que capturar primero y clasificar después.
 

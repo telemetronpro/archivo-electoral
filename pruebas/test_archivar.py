@@ -243,6 +243,29 @@ class Registro(RepositorioTemporal):
         with self.assertRaises(archivar.ErrorArchivo):
             archivar.agregar_cuenta("tiktok", "@x", "X", "campaña-oficial", "")
 
+    def test_institucion_de_la_lista_o_escrita(self):
+        archivar.agregar_cuenta("x", "@GobValle", "Gobernación del Valle del Cauca", "institucion",
+                                "https://www.valledelcauca.gov.co", "Gobernación")
+        archivar.agregar_cuenta("facebook", "PoliciaCali", "Policía Metropolitana de Cali",
+                                "institucion", "https://policia.gov.co", "Otra",
+                                "Policía Metropolitana de Cali")
+        dadas = {c["cuenta"]: c["institucion"] for c in archivar.cuentas() if c.get("institucion")}
+        self.assertEqual(dadas, {"@GobValle": "Gobernación",
+                                 "PoliciaCali": "Policía Metropolitana de Cali"})
+        with self.assertRaises(archivar.ErrorArchivo):  # institución sin decir cuál
+            archivar.agregar_cuenta("x", "@algo", "Algo", "institucion", "https://a.co")
+        with self.assertRaises(archivar.ErrorArchivo):
+            archivar.agregar_cuenta("x", "@algo", "Algo", "institucion", "https://a.co", "Inventada")
+
+        def falsa_descarga(url, carpeta):
+            (carpeta / "pieza.mp4").write_bytes(b"video")
+            return {"uploader_id": "GobValle"}
+        with mock.patch.object(archivar, "descargar_con_yt_dlp", falsa_descarga):
+            carpeta, _ = archivar.archivar_enlace("https://x.com/GobValle/status/1")
+        ficha = yaml.safe_load((carpeta / "ficha.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(ficha["fuente"]["categoria"], "institucion")
+        self.assertEqual(ficha["fuente"]["institucion"], "Gobernación")
+
     def test_buzon_archiva_y_borra_todo(self):
         buzon = self.raiz / "recibido" / "2027-08-12"
         (buzon / "154827441370").mkdir(parents=True)

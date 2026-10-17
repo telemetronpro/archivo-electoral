@@ -47,14 +47,25 @@ CATEGORIAS = {
     "tercero-contratado": "Tercero contratado",
     "tercero-sin-declarar": "Tercero sin declarar (sospecha)",
     "personalidad-publica": "Personalidad pública o influenciador",
+    "institucion": "Institución u órgano público",
     "otro-actor-publico": "Otro actor público",
     "desconocida": "Desconocida",
     "no-atribuida": "No atribuida (por privacidad no se guardó la fuente)",
 }
 CONFIANZAS = ("alta", "media", "baja")
 # Categorías que puede tener una cuenta de cuentas.yaml.
-CATEGORIAS_CUENTA = ("campaña-oficial", "tercero-contratado", "personalidad-publica",
+CATEGORIAS_CUENTA = ("campaña-oficial", "tercero-contratado", "personalidad-publica", "institucion",
                      "otro-actor-publico")
+# Tipos de institución para la categoría "institucion". Con "Otra" se escribe el órgano a mano.
+INSTITUCIONES = (
+    "Presidencia de la República", "Vicepresidencia", "Ministerio o departamento administrativo",
+    "Gobernación", "Alcaldía", "Secretaría departamental o municipal", "Congreso",
+    "Asamblea departamental", "Concejo municipal", "Junta administradora local",
+    "Fuerza Pública (Policía, Ejército, Armada, Fuerza Aeroespacial)",
+    "Organismo de control (Procuraduría, Contraloría, Defensoría, Personería)",
+    "Organización electoral (Registraduría, CNE)", "Rama judicial o Fiscalía",
+    "Entidad descentralizada o empresa pública", "Otra",
+)
 PLATAFORMAS = ("tiktok", "instagram", "facebook", "youtube", "x", "threads", "telegram", "web")
 TIPOS_ARCHIVO = {
     "valla": "Valla o pasacalle",
@@ -524,9 +535,12 @@ def archivar_enlace(url, candidato=None, nota=None, prueba=False, cuenta=None):
         if not archivos:
             avisos.append("No quedó ningún archivo propio de la pieza; solo el testigo externo.")
         if cuenta:
+            de_quien = cuenta["nombre"] + (f" ({cuenta['institucion']})" if cuenta.get("institucion") else "")
             fuente = {"categoria": cuenta["categoria"], "confianza": "alta" if cuenta.get("respaldo") else "media",
-                      "evidencia": [f"La cuenta es de {cuenta['nombre']} según cuentas.yaml"
+                      "evidencia": [f"La cuenta es de {de_quien} según cuentas.yaml"
                                     + (f" (respaldo: {cuenta['respaldo']})" if cuenta.get("respaldo") else "")]}
+            if cuenta.get("institucion"):
+                fuente["institucion"] = cuenta["institucion"]
         else:
             fuente = {"categoria": "desconocida", "confianza": None, "evidencia": [
                 "Anuncio de la Biblioteca de Anuncios de Meta: revisar el aviso 'Pagado por' en la "
@@ -629,12 +643,27 @@ def seguir(maximo=10):
     return informe
 
 
-def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo):
-    """Agrega una cuenta pública al final de cuentas.yaml, sin tocar los comentarios."""
+def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo, institucion=None, otra=None):
+    """Agrega una cuenta pública al final de cuentas.yaml, sin tocar los comentarios.
+
+    Si la categoría es "institucion", hay que decir cuál: un tipo de INSTITUCIONES o, con
+    "Otra" (o sin tipo), el nombre del órgano escrito a mano en `otra`.
+    """
     if plataforma not in PLATAFORMAS:
         raise ErrorArchivo(f"Plataforma no válida: {plataforma}")
     if categoria not in CATEGORIAS_CUENTA:
         raise ErrorArchivo(f"Categoría no válida: {categoria}")
+    institucion, otra = (institucion or "").strip(), (otra or "").strip()
+    if categoria == "institucion":
+        if institucion and institucion != "Otra" and institucion not in INSTITUCIONES:
+            raise ErrorArchivo(f"Tipo de institución no válido: {institucion}")
+        if institucion in ("", "Otra"):
+            if not otra:
+                raise ErrorArchivo("Diga qué institución u órgano es: elija un tipo o escríbalo "
+                                   "en 'Otra institución u órgano'.")
+            institucion = otra
+    else:
+        institucion = ""
     if not re.match(r"https?://", respaldo or ""):
         raise ErrorArchivo("El respaldo debe ser un enlace que muestre que la cuenta es de un "
                            "actor público.")
@@ -644,9 +673,11 @@ def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo):
     for c in cuentas():
         if c.get("plataforma") == plataforma and normalizar(c.get("cuenta")) == normalizar(cuenta):
             raise ErrorArchivo(f"La cuenta ya está en cuentas.yaml como {c['nombre']}.")
-    entrada = yaml.safe_dump([{"plataforma": plataforma, "cuenta": cuenta, "nombre": nombre,
-                               "categoria": categoria, "respaldo": respaldo.strip()}],
-                             sort_keys=False, allow_unicode=True, width=100)
+    datos = {"plataforma": plataforma, "cuenta": cuenta, "nombre": nombre, "categoria": categoria}
+    if institucion:
+        datos["institucion"] = institucion
+    datos["respaldo"] = respaldo.strip()
+    entrada = yaml.safe_dump([datos], sort_keys=False, allow_unicode=True, width=100)
     ruta = RAIZ / "cuentas.yaml"
     texto = ruta.read_text(encoding="utf-8")
     if not texto.endswith("\n"):
@@ -655,7 +686,8 @@ def agregar_cuenta(plataforma, cuenta, nombre, categoria, respaldo):
     sangria = sangria.group(1) if sangria else "  "
     texto += "\n" + "".join(sangria + linea + "\n" for linea in entrada.splitlines())
     ruta.write_text(texto, encoding="utf-8")
-    return f"Cuenta agregada: {nombre} ({plataforma}: {cuenta}), {CATEGORIAS[categoria]}."
+    return (f"Cuenta agregada: {nombre} ({plataforma}: {cuenta}), {CATEGORIAS[categoria]}"
+            + (f": {institucion}." if institucion else "."))
 
 
 PALABRAS_TIPO = (
@@ -860,7 +892,8 @@ def desde_issue(prueba=False):
     if "Cuenta o usuario" in campos:
         return None, [agregar_cuenta(campos.get("Plataforma") or "", campos.get("Cuenta o usuario"),
                                      campos.get("Nombre") or "", campos.get("Categoría") or "",
-                                     campos.get("Respaldo") or "")]
+                                     campos.get("Respaldo") or "", campos.get("Tipo de institución"),
+                                     campos.get("Otra institución u órgano"))]
     if "Código de la pieza" in campos:
         carpeta = reclasificar((campos["Código de la pieza"] or "").strip(),
                                campos.get("Nueva categoría") or "", campos.get("Confianza") or "",
@@ -911,6 +944,8 @@ def main(argv=None):
     ac.add_argument("--cuenta", required=True); ac.add_argument("--nombre", required=True)
     ac.add_argument("--categoria", required=True, choices=CATEGORIAS_CUENTA)
     ac.add_argument("--respaldo", required=True)
+    ac.add_argument("--institucion", choices=INSTITUCIONES, help="solo para la categoría institucion")
+    ac.add_argument("--otra", help="nombre del órgano si no está en la lista de --institucion")
     bz = sub.add_parser("buzon"); bz.add_argument("carpeta")
     sub.add_parser("sellos")
     v = sub.add_parser("verificar"); v.add_argument("id"); v.add_argument("--carpeta")
@@ -928,7 +963,7 @@ def main(argv=None):
             return 0
         if args.orden == "agregar-cuenta":
             escribir(agregar_cuenta(args.plataforma, args.cuenta, args.nombre, args.categoria,
-                                    args.respaldo))
+                                    args.respaldo, args.institucion, args.otra))
             return 0
         if args.orden == "buzon":
             escribir("\n".join(procesar_buzon(args.carpeta)) or "El buzón está vacío.")

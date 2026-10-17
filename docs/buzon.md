@@ -10,7 +10,25 @@ Una página web dentro de la red Tor donde cualquiera puede subir fotos y videos
 
 No escriba su nombre ni datos personales. Del mensaje solo se usan los enlaces, el tipo de pieza (valla, pasacalle, volante, afiche, WhatsApp, Telegram) y la comuna; el resto se borra sin guardarse. A las fotos y videos se les quita la ubicación, la fecha de la cámara y el modelo del teléfono.
 
-## Para el equipo: montarlo
+## Para el equipo: empezar hoy, con su propia computadora
+
+La forma más rápida de tener el buzón andando es la aplicación de escritorio de OnionShare. Funciona mientras la computadora esté prendida y con OnionShare abierto; más adelante se puede pasar a una computadora dedicada (siguiente sección).
+
+1. Descargue OnionShare de <https://onionshare.org> (Windows, Mac o Linux) e instálelo.
+2. Ábralo y pulse **Conectar a Tor** (*Connect to Tor*). Espere a que diga que está conectado.
+3. Elija **Recibir archivos** (*Receive Files*).
+4. Antes de iniciar, marque estas opciones (están en la misma pestaña; en algunas versiones bajo *Opciones avanzadas*):
+   - **Guardar esta pestaña y abrirla automáticamente al abrir OnionShare** (*Save this tab…*). Así la dirección `.onion` es siempre la misma.
+   - **Este es un servicio público de OnionShare** (*This is a public OnionShare service*). Así quien envía no necesita una clave aparte, solo la dirección.
+   - **Título personalizado** (*Custom title*): `Buzón del archivo electoral: suba fotos o pegue enlaces. No escriba su nombre.`
+   - Deje habilitados el envío de texto y de archivos.
+5. Elija la carpeta donde se guardará lo que llegue y pulse **Iniciar modo de recepción** (*Start Receive Mode*).
+6. Copie la dirección `.onion` que aparece y publíquela en el README, en la sección "Cómo aportar".
+7. Configure la computadora para que **no se suspenda**: si se suspende, el buzón deja de recibir.
+
+**Pasar lo recibido al archivo:** cada día, abra la carpeta de OnionShare. Las fotos y videos se suben con el formulario [Subir una foto o un archivo](../../../issues/new?template=2-foto-o-archivo.yml), y los enlaces de los mensajes se pegan en [Guardar un enlace](../../../issues/new?template=1-enlace.yml). Así la persona que envió sigue anónima: en GitHub solo aparece la cuenta de quien es del equipo. Después **borre lo que procesó** de la carpeta. No copie a los formularios nada del texto de los mensajes salvo los enlaces, el tipo de pieza y la comuna.
+
+## Para el equipo: montarlo en una computadora dedicada (automático)
 
 Hace falta una computadora que quede prendida y conectada a internet: una Raspberry Pi 4 o 5, un portátil viejo o un servidor barato. No necesita abrir puertos en el router ni tener una IP fija: Tor se encarga de eso, y nadie puede averiguar dónde está la computadora.
 
